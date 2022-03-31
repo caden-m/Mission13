@@ -31,6 +31,9 @@ namespace MySQLFun
             {
                 options.UseMySql(Configuration["ConnectionStrings:BowlersDbConnection"]);
             });
+
+            services.AddScoped<IBowlerRepository, EFBowlerRepository>();
+            services.AddScoped<ITeamRepository, EFTeamRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,7 +60,10 @@ namespace MySQLFun
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{teamName?}");
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{bowlerId?}");
             });
         }
     }

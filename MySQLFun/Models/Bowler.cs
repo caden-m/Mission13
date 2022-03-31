@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 namespace MySQLFun.Models
@@ -19,5 +20,7 @@ namespace MySQLFun.Models
         public string BowlerZip { get; set;}
         public string BowlerPhoneNumber { get; set; }
         public int TeamID { get; set; }
+        [ForeignKey("TeamID")]
+        public Team Team { get; set; }
     }
 }

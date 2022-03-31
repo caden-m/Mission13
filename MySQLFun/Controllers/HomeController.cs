@@ -1,43 +1,77 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using MySQLFun.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using MySQLFun.Models;
+
 
 namespace MySQLFun.Controllers
 {
     public class HomeController : Controller
     {
-        //private readonly ILogger<HomeController> _logger;
-
-        private BowlingLeagueDbContext _context { get; set; }
-
-        public HomeController(BowlingLeagueDbContext temp)
+        private IBowlerRepository _repo { get; set; }
+        private ITeamRepository _repoteam { get; set; }
+        public HomeController(IBowlerRepository temp, ITeamRepository tempteam)
         {
-            _context = temp;
+            _repo = temp;
+            _repoteam = tempteam;
         }
-
-        public IActionResult Index()
+        public IActionResult Index(string teamName)
         {
-            var blah = _context.Bowlers.ToList();
-
+            var blah = _repo.Bowlers.Include("Team")
+                .Where(b => b.Team.TeamName == teamName || teamName == null)
+                .ToList();
+            ViewData["TeamName"] = teamName;
             return View(blah);
         }
-
-        public IActionResult Privacy()
+        [HttpGet]
+        public IActionResult AddBowler()
         {
-            var blah = _context.Bowlers.ToList();
+            ViewBag.Teams = _repoteam.Teams.ToList();
+            var blah = _repo.Bowlers.Select(x => x.BowlerID);
 
-            return View(blah);
+            var hah = new Bowler
+            {
+                BowlerID = blah.Max() + 1
+            };
+
+            return View("BowlerForm", hah);
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        [HttpPost]
+        public IActionResult AddBowler(Bowler b)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var blah = _repo.Bowlers.Select(x => x.BowlerID);
+
+            if (blah.Contains(b.BowlerID))
+            {
+                _repo.SaveBowler(b);
+            }
+            else
+            {
+                _repo.CreateBowler(b);
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public IActionResult Edit(int bowlerid)
+        {
+            var blah = _repo.Bowlers.Include("Team").Where(x => x.BowlerID == bowlerid).FirstOrDefault();
+            ViewBag.Teams = _repoteam.Teams.ToList();
+            return View("BowlerForm", blah);
+        }
+
+        public IActionResult Delete(Bowler b)
+        {
+            var blah = _repo.Bowlers.Where(x => x.BowlerID == b.BowlerID).FirstOrDefault();
+            _repo.DeleteBowler(blah);
+            return RedirectToAction("Index");
         }
     }
 }
